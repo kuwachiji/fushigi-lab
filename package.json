@@ -1,0 +1,11 @@
+{
+  "name": "fushigi-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "砂・水・火を描いて実験する理科教材。ライセンスで無料版/有料版を出し分けるデモ",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 -m http.server 5500"
+  }
+}

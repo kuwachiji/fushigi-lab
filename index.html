@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ふしぎな実験室</title>
+  <meta name="description" content="すな・みず・ひをかいて、ものの性質をたしかめる理科教材。ライセンスで無料版と有料版を出し分けるデモ。" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>ふしぎな実験室 <small>すな・みず・ひを かいて、たしかめよう</small></h1>
+    <div class="plan">
+      <span id="planBadge" class="badge">確認中…</span>
+      <button id="recheckBtn" type="button">ライセンス再取得</button>
+    </div>
+  </header>
+
+  <div id="notice" class="notice hidden"></div>
+
+  <main class="lab">
+    <section id="stage" class="stage">
+      <canvas id="lab" width="640" height="400" aria-label="実験のキャンバス"></canvas>
+      <div id="overlay" class="overlay hidden"></div>
+    </section>
+    <aside class="tools">
+      <h2>ざいりょう</h2>
+      <div id="palette" class="palette"></div>
+      <h2>ふでの太さ</h2>
+      <div id="brush" class="brush"></div>
+      <div class="controls">
+        <button id="playBtn" type="button">⏸ とめる</button>
+        <button id="stepBtn" type="button">▶| コマ送り</button>
+        <button id="clearBtn" type="button">🧹 ぜんぶ消す</button>
+        <button id="shotBtn" type="button">📷 写真をとる</button>
+      </div>
+      <div id="tip" class="tip">ざいりょうをえらんで、画面をなぞってみよう。</div>
+    </aside>
+  </main>
+
+  <section class="missions">
+    <h2>ミッション</h2>
+    <div class="mission-grid">
+      <ul id="missionList"></ul>
+      <div id="preview" class="preview hidden">
+        <p id="previewText">有料版なら、あぶら・ひ・こおり・たねを使った実験が 6 つ増えます。あぶらは みずに うくかな？</p>
+        <canvas id="previewCanvas" width="180" height="108"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="note">
+    <h2>かんさつノート</h2>
+    <textarea id="note" placeholder="気づいたことを書いておこう"></textarea>
+    <p id="noteLocked" class="locked-msg hidden">かんさつノートは有料版で使えます。</p>
+  </section>
+
+  <section id="certificate" class="certificate hidden">
+    <h2>🏅 しゅうりょうしょう 🏅</h2>
+    <p class="name">ふしぎな実験室の ミッションを ぜんぶ クリアしました！</p>
+    <p id="certDate"></p>
+  </section>
+
+  <details id="dev" class="dev">
+    <summary>開発者向け設定（ライセンスの接続先とトークン）</summary>
+    <p>この教材は <code>?api=&lt;ライセンスサーバー&gt;&amp;token=&lt;トークン&gt;</code> で開くと、ここに自動で入ります。</p>
+    <label for="apiInput">ライセンスサーバーの URL</label>
+    <input id="apiInput" type="url" placeholder="https://example.com" autocomplete="off" />
+    <label for="tokenInput">トークン</label>
+    <textarea id="tokenInput" placeholder="学習プラットフォームが発行したトークン" autocomplete="off"></textarea>
+    <div class="row">
+      <button id="applyBtn" type="button">保存してライセンスを確認</button>
+      <button id="forgetBtn" type="button">保存した設定を消す</button>
+    </div>
+    <p>この教材のオリジン: <code id="originText"></code>（ライセンスサーバー側で、このオリジンを許可してください）</p>
+    <pre id="devResult">（まだ確認していません）</pre>
+  </details>
+
+  <footer>ふしぎな実験室 — ライセンスで無料版と有料版を出し分ける教材のデモ</footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
