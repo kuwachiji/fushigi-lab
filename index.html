@@ -61,21 +61,6 @@
     <p id="certDate"></p>
   </section>
 
-  <details id="dev" class="dev">
-    <summary>開発者向け設定（ライセンスの接続先とトークン）</summary>
-    <p>この教材は <code>?api=&lt;ライセンスサーバー&gt;&amp;token=&lt;トークン&gt;</code> で開くと、ここに自動で入ります。</p>
-    <label for="apiInput">ライセンスサーバーの URL</label>
-    <input id="apiInput" type="url" placeholder="https://example.com" autocomplete="off" />
-    <label for="tokenInput">トークン</label>
-    <textarea id="tokenInput" placeholder="学習プラットフォームが発行したトークン" autocomplete="off"></textarea>
-    <div class="row">
-      <button id="applyBtn" type="button">保存してライセンスを確認</button>
-      <button id="forgetBtn" type="button">保存した設定を消す</button>
-    </div>
-    <p>この教材のオリジン: <code id="originText"></code>（ライセンスサーバー側で、このオリジンを許可してください）</p>
-    <pre id="devResult">（まだ確認していません）</pre>
-  </details>
-
   <footer>ふしぎな実験室 — ライセンスで無料版と有料版を出し分ける教材のデモ</footer>
 
   <script type="module" src="./app.js"></script>
