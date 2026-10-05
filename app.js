@@ -11,9 +11,11 @@ const PLANS = {
 // API が予約している値（どの製品でも同じ意味）
 const RESERVED = { no: "none", expired: "expired", lapsed: "lapsed" };
 
+// ライセンスサーバーのベース URL。切り替えるときはここを変える（URL のクエリでは受け取らない）
+const LICENSE_API = "https://dev.nobilog.jp";
+
 const STORAGE = {
-  api: "fushigi.api",
-  token: "fushigi.token",
+  token: "fushigi.token", // 学習プラットフォームから受け取ったトークン（sessionStorage: タブを閉じると消える）
   missions: "fushigi.missions",
   note: "fushigi.note",
 };
@@ -28,38 +30,39 @@ const BRUSHES = [
   { r: 6, name: "ふとい", premium: true },
 ];
 
-// ---------- 保存（localStorage は使えないことがあるので必ず try/catch） ----------
-function load(key) {
+// ---------- 保存（Storage は使えないことがあるので必ず try/catch） ----------
+function readFrom(storage, key) {
   try {
-    return localStorage.getItem(key);
+    return storage.getItem(key);
   } catch {
     return null;
   }
 }
 
-function store(key, value) {
+function writeTo(storage, key, value) {
   try {
-    if (value === null || value === undefined) localStorage.removeItem(key);
-    else localStorage.setItem(key, value);
+    if (value === null || value === undefined) storage.removeItem(key);
+    else storage.setItem(key, value);
   } catch {
     /* ignore */
   }
 }
 
+// ブラウザに残す設定（ミッション、ノート）
+const load = (key) => readFrom(localStorage, key);
+const store = (key, value) => writeTo(localStorage, key, value);
+// タブを閉じたら消す（トークン）。開き直すときは学習プラットフォームを経由させる
+const loadSession = (key) => readFrom(sessionStorage, key);
+const storeSession = (key, value) => writeTo(sessionStorage, key, value);
+
 // ---------- URL クエリの受け取り ----------
+// 読むのは `token` だけ
 (function takeQueryParams() {
   const params = new URLSearchParams(location.search);
-  let changed = false;
-  if (params.has("token")) {
-    store(STORAGE.token, params.get("token"));
-    changed = true;
-  }
-  if (params.has("api")) {
-    store(STORAGE.api, params.get("api"));
-    changed = true;
-  }
+  if (!params.has("token")) return;
+  storeSession(STORAGE.token, params.get("token"));
   // トークンは URL に残さない（ブックマークや共有で漏れないように）
-  if (changed) history.replaceState(null, "", location.pathname + location.hash);
+  history.replaceState(null, "", location.pathname + location.hash);
 })();
 
 // ---------- ライセンス取得 ----------
@@ -87,9 +90,8 @@ async function fetchLicense(api, token) {
 }
 
 // ---------- 状態 ----------
-let plan = "checking"; // checking | noapi | none | error | expired | lapsed | unknown | free | premium
+let plan = "checking"; // checking | none | error | expired | lapsed | unknown | free | premium
 let licenseValue = null;
-let lastResult = null;
 let selected = E.SAND;
 let brush = BRUSHES[1];
 let running = true;
@@ -468,7 +470,6 @@ function renderNote() {
 // ---------- プラン表示 ----------
 const NOTICES = {
   checking: { text: "ライセンスを確認しています…", cls: "" },
-  noapi: { text: "ライセンスサーバーが設定されていません。学習プラットフォームの教材リンクから開くか、下の「開発者向け設定」で接続先を入れてください。", cls: "bad" },
   none: { text: "ライセンスがありません。学習プラットフォームの教材リンクから開いてください。", cls: "bad" },
   error: { text: "ライセンスを確認できませんでした。接続先が違う、この教材のオリジンがライセンスサーバーで許可されていない、ネットワークの問題、などが考えられます。", cls: "bad" },
   expired: { text: "このリンクは使えなくなりました。学習プラットフォームから開き直してください。", cls: "bad" },
@@ -480,7 +481,6 @@ const NOTICES = {
 
 const BADGES = {
   checking: ["確認中…", ""],
-  noapi: ["未設定", "bad"],
   none: ["ライセンスなし", "bad"],
   error: ["確認できません", "bad"],
   expired: ["無効", "bad"],
@@ -529,57 +529,21 @@ function setPlan(next) {
   renderNote();
 }
 
-// ---------- 開発者向け設定 ----------
-function renderDev() {
-  $("apiInput").value = load(STORAGE.api) || "";
-  $("tokenInput").value = load(STORAGE.token) || "";
-  $("originText").textContent = location.origin;
-  const out = $("devResult");
-  if (!lastResult) {
-    out.textContent = "（まだ確認していません）";
-    return;
-  }
-  if (lastResult.ok) {
-    out.textContent = `GET ${lastResult.url}\nHTTP ${lastResult.status}\n${lastResult.json ? JSON.stringify(lastResult.json, null, 2) : lastResult.text}`;
-  } else {
-    out.textContent = `GET ${lastResult.url}\n失敗: ${lastResult.error}\n（CORS で拒否されると、ブラウザは詳しい理由を JavaScript に渡しません。DevTools の Network / Console を見てください）`;
-  }
-}
-
-$("applyBtn").addEventListener("click", () => {
-  store(STORAGE.api, $("apiInput").value.trim() || null);
-  store(STORAGE.token, $("tokenInput").value.trim() || null);
-  checkLicense();
-});
-
-$("forgetBtn").addEventListener("click", () => {
-  store(STORAGE.api, null);
-  store(STORAGE.token, null);
-  lastResult = null;
-  checkLicense();
-});
-
 $("recheckBtn").addEventListener("click", checkLicense);
 
 // ---------- ライセンス確認の本体 ----------
 async function checkLicense() {
-  const api = load(STORAGE.api);
-  const token = load(STORAGE.token);
+  const token = loadSession(STORAGE.token);
   licenseValue = null;
   setPlan("checking");
-  renderDev();
-  if (!api) {
-    setPlan("noapi");
-    return;
-  }
   if (!token) {
     setPlan("none");
     return;
   }
-  const result = await fetchLicense(api, token);
-  lastResult = result;
-  renderDev();
+  const result = await fetchLicense(LICENSE_API, token);
   if (!result.ok) {
+    // CORS で拒否されると理由は JavaScript に渡らない。DevTools の Network / Console で確認する
+    console.warn(`ライセンス確認に失敗: GET ${result.url}`, result.error);
     setPlan("error");
     return;
   }
@@ -610,6 +574,5 @@ function frame() {
   requestAnimationFrame(frame);
 }
 
-renderDev();
 checkLicense();
 requestAnimationFrame(frame);

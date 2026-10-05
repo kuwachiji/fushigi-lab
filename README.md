@@ -27,19 +27,15 @@
 
 ### 1. 教材の開き方
 
-学習プラットフォームは、教材の URL にトークンを付けて開きます。
+学習プラットフォームは、教材の URL にクエリ `token` を付けて開きます。
 
 ```
-https://kuwachiji.github.io/fushigi-lab/?api=<ライセンスサーバーの URL>&token=<トークン>
+https://kuwachiji.github.io/fushigi-lab/?token=<トークン>
 ```
 
-| クエリ | 意味 |
-|---|---|
-| `token` | 学習プラットフォームが発行した、利用者と製品に紐づく署名付きトークン |
-| `api` | ライセンスサーバーのベース URL（例: `https://example.com`）。一度受け取ると保存されるので、2 回目以降は省略できます |
-
-教材は受け取った値を `localStorage` に保存し、`history.replaceState` で URL から消します（ブックマークや共有でトークンが漏れないようにするため）。
-どちらも画面下の「開発者向け設定」から手で入れることもできます。
+教材は受け取ったトークンを `sessionStorage` に保存し、`history.replaceState` で URL から消します。
+ライセンスサーバーの URL は `app.js` 先頭の `LICENSE_API` に持ち、URL では受け取りません。
+`token` が無いときは「見るだけモード」になります。
 
 ### 2. ライセンスの取得
 
@@ -66,7 +62,7 @@ GET {api}/api/license/?token=<トークン>
 
 ### 3. ライセンスサーバー側に必要な設定
 
-- この教材の**オリジン**（`https://kuwachiji.github.io`。ローカル確認なら `http://localhost:5500`）を、製品の許可オリジンとして登録してください。
+- この教材のオリジン `https://kuwachiji.github.io` を、製品の許可オリジンとして登録してください。
   許可されていないオリジンからの呼び出しには `Access-Control-Allow-Origin` が付かず、ブラウザが応答を読めません。
 - 製品のライセンス種別として `free` または `premium` を登録してください。
 
@@ -99,6 +95,7 @@ node --test
 
 ## ハマりどころ
 
-- **CORS で失敗すると理由が分からない**: ブラウザは CORS 拒否の詳細を JavaScript に渡しません。「開発者向け設定」の結果欄には `失敗: TypeError` としか出ないので、DevTools の Network / Console を見てください。
+- **ローカルのライセンスサーバーで確認するとき**: `app.js` 先頭の `LICENSE_API` を一時的に書き換えてください（コミットしないこと）。
+- **CORS で失敗すると理由が分からない**: ブラウザは CORS 拒否の詳細を JavaScript に渡しません。画面には「確認できません」としか出ないので、DevTools の Network / Console を見てください（Console に呼び出した URL を警告として出しています）。
 - **カスタムヘッダを付けない**: `Authorization` などを付けると preflight が必要になり、ライセンス API はそれに応答しません。トークンはクエリで渡します。
 - **`file://` では動かない**: 上記のとおり Origin が `null` になります。
